@@ -1,6 +1,6 @@
 import os,sys
-import random as rd
 sys.path.append(os.curdir)
+import random as rd
 from manimlib import *
 from polygon import polygons_from_lines
 from convexhull import convex_hull
@@ -220,7 +220,6 @@ def find_lines_by_intersection(lines,p):
     for line in lines:
         if p[0]*line[0]+p[1]*line[1]==line[2] and line not in lis:
             lis.append(line)
-    print(lis)
     return lis
 
 def calculate_range(lines,C,first=True):
@@ -449,7 +448,6 @@ class PL(Scene):
         if symbol == key.X:
             pos=self.range_x.p2n(self.mouse_point.get_center())
             self.X.set_value(pos)
-            print(pos)
         if symbol == key.Y:
             pos=self.range_y.p2n(self.mouse_point.get_center())
             self.Y.set_value(pos)
@@ -460,15 +458,15 @@ class PL(Scene):
         super().on_key_press(symbol,modifiers)
         
     def construct(self):
-        func=[1200,1000]
+        func=[300,1000]
         lines=[
             [10,5,200],
             [2,3,60],
             [1,1,34],
         ]
+        minimizing=False
         
         colors=[BLUE_C,GREEN,RED,BLUE_C,GREEN,RED,YELLOW]
-        minimizing=False
 
         self.func=func
         self.lines=lines
