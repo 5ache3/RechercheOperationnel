@@ -147,15 +147,20 @@ class Simplex(Scene):
         p=SimplexSolver(programme)
 
         tables=p.tables
-        table=tables[0]['table']
+        table=tables[1]['table']
         main_t=[t[1:] for t in table[1:]]
-        t0=Table(
-            table=main_t,
-            col_labels=[Tex(t) for t in table[0][1:]],
-            row_labels=[Tex(t[0]) for t in table[1:]]
-            ).scale(.5)
-        t0.add_highlighted_cell((2,2))
-        self.wait()
-        self.add(t0)
+        # t0=Table(
+        #     table=main_t,
+        #     col_labels=[Tex(t) for t in table[0][1:]],
+        #     row_labels=[Tex(t[0]) for t in table[1:]]
+        #     )
+        t0=Table(table).scale(.5)
+        
+
+        c=t0.get_cell_b((2,3))
+        c2=t0.get_cell_b((2,5))
+        rec=SurroundingRectangle(VGroup(c,c2),buff=0,fill_color=RED,fill_opacity=.4,stroke_width=0)
+        self.play(t0.create_lables())
+        self.play(ShowCreation(rec))
 
 

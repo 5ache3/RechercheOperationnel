@@ -7,6 +7,7 @@ from manimlib.mobject.mobject import Mobject
 from manimlib.mobject.types.vectorized_mobject import VMobject, VGroup
 from manimlib.mobject.geometry import Line, Polygon, Rectangle
 from manimlib.mobject.svg.text_mobject import Text
+from manimlib import Tex
 from manimlib.utils.color import Color
 
 # --- ManimGL Animation Imports ---
@@ -29,7 +30,7 @@ def _to_color(color_spec: Any) -> Color:
 # --- Background Rectangle Utility (Handles cell filling and import compatibility) ---
 def BackgroundRectangle_Wrapper(cell_polygon: Polygon, color: Any, opacity: float = 0.8, **kwargs) -> Polygon:
     """
-    Creates a filled Polygon from the cell boundaries (returned by get_cell) 
+    Creates a filled Polygon from the cell boundaries (returned by get_cell_b) 
     to act as the background.
     """
     # Filter stroke_width to avoid TypeError if it comes from kwargs
@@ -63,8 +64,9 @@ class Table(VGroup):
         col_labels: Iterable[VMobject] | None = None,
         top_left_entry: VMobject | None = None,
         v_buff: float = 0.8,
-        h_buff: float = 1.3,
-        include_outer_lines: bool = False,
+        h_buff: float = 1,
+        include_outer_lines: bool = True,
+        math_table : bool =True,
         add_background_rectangles_to_entries: bool = False,
         entries_background_color: Any = BLACK,
         entries_background_opacity: float = 0.2,
@@ -81,6 +83,7 @@ class Table(VGroup):
         self.row_labels = row_labels
         self.col_labels = col_labels
         self.top_left_entry = top_left_entry
+        self.math_table=math_table
         self.v_buff = v_buff
         self.h_buff = h_buff
         self.include_outer_lines = include_outer_lines
@@ -156,7 +159,7 @@ class Table(VGroup):
         return [
             [
                 item if isinstance(item, VMobject) 
-                else self.element_to_mobject(str(item), **self.element_to_mobject_config)
+                else  Tex(str(item)) if self.math_table else self.element_to_mobject(str(item), **self.element_to_mobject_config)
                 for item in row
             ]
             for row in table
@@ -357,8 +360,8 @@ class Table(VGroup):
                 col_shift = 1 if self.row_labels is not None else 0
                 full_pos = (r_data_idx + 1 + row_shift, c_data_idx + 1 + col_shift)
 
-                # Use get_cell with the shifted position to get the exact boundary
-                cell_boundaries = self.get_cell(full_pos)
+                # Use get_cell_b with the shifted position to get the exact boundary
+                cell_boundaries = self.get_cell_b(full_pos)
                 
                 # Create the filled background Polygon (fills the whole cell area)
                 # Pass the provided opacity
@@ -368,8 +371,11 @@ class Table(VGroup):
                 entry.background_rectangle = bg_rect
                 self.add_to_back(bg_rect)
         return self
-
-    def get_cell(self, pos: Sequence[int] = (1, 1), **kwargs) -> Polygon:
+        
+    def get_cell(self, pos: Sequence[int] = (1, 1), **kwargs):
+        return self.mob_table[pos[0]][pos[1]]
+    
+    def get_cell_b(self, pos: Sequence[int] = (1, 1), **kwargs) -> Polygon:
         row = self.get_rows()[pos[0]]
         col = self.get_columns()[pos[1]]
         
@@ -386,7 +392,7 @@ class Table(VGroup):
         self, pos: Sequence[int] = (1, 1), color: Any = YELLOW, **kwargs
     ) -> Polygon:
         # Returns a filled Polygon (cell) which acts as the highlight
-        cell = self.get_cell(pos)
+        cell = self.get_cell_b(pos)
         cell.set_fill(color=_to_color(color), opacity=0.8)
         cell.set_stroke(width=0)
         return cell 
@@ -436,6 +442,54 @@ class Table(VGroup):
                 animations.append(entry_animation(entry.background_rectangle, **kwargs))
 
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
+
+    def create_lines(
+        self,
+        lag_ratio: float = 1,
+        line_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        **kwargs
+        ):
+        animations: Sequence[Animation] = []
+        
+        # Lines
+        if hasattr(self, 'vertical_lines') and hasattr(self, 'horizontal_lines'):
+            animations.append(
+                line_animation(
+                    VGroup(self.vertical_lines, self.horizontal_lines),
+                    **kwargs,
+                )
+            )
+        return AnimationGroup(*animations, lag_ratio=lag_ratio)
+    
+    def create_lables(
+        self,
+        lag_ratio: float = 1,
+        line_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        label_animation: Callable[[VMobject | VGroup], Animation] = Write,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+
+        **kwargs
+        ):
+        animations: Sequence[Animation] = []
+        
+        # Lines
+        if hasattr(self, 'vertical_lines') and hasattr(self, 'horizontal_lines'):
+            animations.append(
+                line_animation(
+                    VGroup(self.vertical_lines, self.horizontal_lines),
+                    **kwargs,
+                )
+            )
+        if self.elements_without_labels:
+            animations.append(label_animation(VGroup(*[*self.get_rows()[0],*self.get_columns()[0]]), **kwargs))
+            # animations.append(element_animation(self.elements_without_labels))
+
+        labels = self.get_labels()
+        if labels:
+            animations.append(label_animation(labels, **kwargs))
+        
+        return AnimationGroup(*animations, lag_ratio=lag_ratio)
+    
 
     def scale(self, scale_factor: float, **kwargs):
         # Scale the buffers to maintain consistent cell appearance after scaling
