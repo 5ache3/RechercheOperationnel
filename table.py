@@ -474,8 +474,8 @@ class Table(VGroup):
             if exclude == None:
                 elements=rows[row]
             else:
-                elements=rows[row][:exclude]+ rows[row][exclude+1:] if exclude+1 < len(rows[row]) else []
-            animations.append(element_animation(rows[row], **kwargs))
+                elements=VGroup(rows[row][:exclude],rows[row][exclude+1:] if exclude+1 < len(rows[row]) else [])
+            animations.append(element_animation(elements, **kwargs))
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
     
@@ -493,8 +493,8 @@ class Table(VGroup):
             if exclude == None:
                 elements=columns[col]
             else:
-                elements=columns[col][:exclude]+ columns[col][exclude+1:] if exclude+1 < len(columns[col]) else []
-
+                elements=VGroup(columns[col][:exclude],columns[col][exclude+1:] if exclude+1 < len(columns[col]) else [])
+                
             animations.append(element_animation(elements, **kwargs))
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
