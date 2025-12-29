@@ -124,7 +124,8 @@ class Table(VGroup):
         mob_table = self._add_labels(mob_table) 
         self._organize_mob_table(mob_table)
         self.elements = VGroup(*it.chain(*mob_table))
-
+        self.num_rows=len(mob_table)
+        self.num_cols=len(mob_table[0])
         # Remove dummy mobject placeholder if present at index 0 (used for top-left cell)
         if len(self.elements) > 0 and isinstance(self.elements[0], Text) and not self.elements[0].text:
              self.elements.remove(self.elements[0]) 

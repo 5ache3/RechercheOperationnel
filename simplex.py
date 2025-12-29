@@ -143,7 +143,7 @@ class Simplex(Scene):
                 num_table=self.tables[ind]['table']
                 piv=self.tables[ind]['piv']
                 equations=VGroup()
-                for i in range(1,len(table.get_rows())-1):
+                for i in range(1,table.num_rows-1):
                     n=num_table[i][-1]
                     d=num_table[i][piv[0]]
                     eq=Tex(fr"\frac{{{process_fraction(n)}}}{{{process_fraction(d)}}}= {round(n/d,2) if d else ''}").scale(.75)
@@ -164,14 +164,14 @@ class Simplex(Scene):
             piv_c=SurroundingRectangle(
                 VGroup(
                     t0.get_cell_b((0,piv[0])),
-                    t0.get_cell_b((len(t0.get_rows())-1,piv[0]))
+                    t0.get_cell_b((t0.num_rows-1,piv[0]))
                 ),
                 buff=0
             )
             piv_r=SurroundingRectangle(
                 VGroup(
                     t0.get_cell_b((piv[0],0)),
-                    t0.get_cell_b((piv[0],len(t0.get_columns())-1))
+                    t0.get_cell_b((piv[0],t0.num_cols-1))
                 ),
                 buff=0
             )
@@ -190,21 +190,23 @@ class Simplex(Scene):
             self.play(t1.create_cell((piv[0],0)))
             self.play(t1.create_column(exclude=piv[0]))
 
-            # pivot column
-            for i in range(1,len(t1.get_rows())):
+            # pivot column 1 if pivot, 0 if otherwise
+            for i in range(1,t1.num_rows):
                 if i == piv[0]:
                     continue
                 self.play(t1.create_cell((i,piv[1])))
 
             # pivot row 
             t0.add_highlighted_cell(piv,color=GREEN)
-            for i in range(1,len(t1.get_columns())):
+            for i in range(1,t1.num_cols):
+
                 if i == piv[1]:
+                    # new pivot always = 1
                     continue
                 t0.add_highlighted_cell((piv[0],i),color=RED)
-                pr=process_fraction(self.tables[ind]['table'][piv[0]][i])
-                pi=process_fraction(self.tables[ind]['table'][piv[0]][piv[1]])
-                nx=process_fraction(self.tables[ind+1]['table'][piv[0]][i])
+                pr=process_fraction(self.tables[ind]['table'][piv[0]][i]) # previous value for cell
+                pi=process_fraction(self.tables[ind]['table'][piv[0]][piv[1]])  # pivot value
+                nx=process_fraction(self.tables[ind+1]['table'][piv[0]][i]) # new value for cell
 
                 equation=VGroup(
                     VGroup(Tex(str(pr),fill_color=RED),Line(start=LEFT*.5,end=RIGHT*.5),Tex(str(pi),fill_color=GREEN)).arrange(DOWN),Tex("="),Tex(str(nx),fill_color=BLUE)
@@ -212,6 +214,8 @@ class Simplex(Scene):
                 self.play(t1.create_cell((piv[0],i)),FadeIn(equation))
                 self.play(FadeOut(equation))
                 t0.remove_highlighted_cell((piv[0],i))
+            
+            
 
 
 
