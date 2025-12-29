@@ -22,9 +22,12 @@ Create = ShowCreation
 
 from fractions import Fraction
 def process_fraction(fraction:Fraction):
-    if fraction.denominator==1:
-        return fraction.numerator
-    return fr"\frac{{{fraction.numerator}}}{{{fraction.denominator}}}"
+    try:
+        if fraction.denominator==1:
+            return fraction.numerator
+        return fr"\frac{{{fraction.numerator}}}{{{fraction.denominator}}}"
+    except:
+        return fraction
 # --- ManimGL Color Utility ---
 def _to_color(color_spec: Any) -> Color:
     """Converts a color specification to a ManimGL Color object."""
@@ -67,8 +70,8 @@ class Table(VGroup):
         row_labels: Iterable[VMobject] | None = None,
         col_labels: Iterable[VMobject] | None = None,
         top_left_entry: VMobject | None = None,
-        v_buff: float = 0.8,
-        h_buff: float = 1,
+        v_buff: float = 0.4,
+        h_buff: float = .8,
         include_outer_lines: bool = True,
         math_table : bool =True,
         add_background_rectangles_to_entries: bool = False,
@@ -163,7 +166,7 @@ class Table(VGroup):
         return [
             [
                 item if isinstance(item, VMobject) 
-                else  Tex(str(item)) if self.math_table else self.element_to_mobject(str(item), **self.element_to_mobject_config)
+                else  Tex(str(process_fraction(item))) if self.math_table else self.element_to_mobject(str(item), **self.element_to_mobject_config)
                 for item in row
             ]
             for row in table
@@ -411,42 +414,6 @@ class Table(VGroup):
         entry.background_rectangle = bg_cell # Attach for animation reference
         return self
 
-    def create(
-        self,
-        lag_ratio: float = 1,
-        line_animation: Callable[[VMobject | VGroup], Animation] = Create,
-        label_animation: Callable[[VMobject | VGroup], Animation] = Write,
-        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
-        entry_animation: Callable[[VMobject | VGroup], Animation] = FadeIn,
-        **kwargs,
-    ) -> AnimationGroup:
-        animations: Sequence[Animation] = []
-        
-        # Lines
-        if hasattr(self, 'vertical_lines') and hasattr(self, 'horizontal_lines'):
-            animations.append(
-                line_animation(
-                    VGroup(self.vertical_lines, self.horizontal_lines),
-                    **kwargs,
-                )
-            )
-
-        # Main Data Entries
-        if self.elements_without_labels:
-            animations.append(element_animation(self.elements_without_labels, **kwargs))
-
-        # Labels
-        labels = self.get_labels()
-        if labels:
-            animations.append(label_animation(labels, **kwargs))
-
-        # Backgrounds
-        for entry in self.elements_without_labels:
-            if hasattr(entry, 'background_rectangle'):
-                animations.append(entry_animation(entry.background_rectangle, **kwargs))
-
-        return AnimationGroup(*animations, lag_ratio=lag_ratio)
-
     def create_lines(
         self,
         lag_ratio: float = 1,
@@ -494,7 +461,56 @@ class Table(VGroup):
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
     
+    def create_row(self,
+        row : int = 0,
+        lag_ratio: float = 1,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        **kwargs,
+        ):
+        animations: Sequence[Animation] = []
+        rows = self.get_rows()
+        if rows:
+            animations.append(element_animation(rows[row], **kwargs))
+        
+        return AnimationGroup(*animations, lag_ratio=lag_ratio)
+    
+    def create(
+        self,
+        lag_ratio: float = 1,
+        line_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        label_animation: Callable[[VMobject | VGroup], Animation] = Write,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        entry_animation: Callable[[VMobject | VGroup], Animation] = FadeIn,
+        **kwargs,
+    ) -> AnimationGroup:
+        animations: Sequence[Animation] = []
+        
+        # Lines
+        if hasattr(self, 'vertical_lines') and hasattr(self, 'horizontal_lines'):
+            animations.append(
+                line_animation(
+                    VGroup(self.vertical_lines, self.horizontal_lines),
+                    **kwargs,
+                )
+            )
 
+        # Main Data Entries
+        if self.elements_without_labels:
+            animations.append(element_animation(self.elements_without_labels, **kwargs))
+
+        # Labels
+        labels = self.get_labels()
+        if labels:
+            animations.append(label_animation(labels, **kwargs))
+
+        # Backgrounds
+        for entry in self.elements_without_labels:
+            if hasattr(entry, 'background_rectangle'):
+                animations.append(entry_animation(entry.background_rectangle, **kwargs))
+
+        return AnimationGroup(*animations, lag_ratio=lag_ratio)
+
+    
     def scale(self, scale_factor: float, **kwargs):
         # Scale the buffers to maintain consistent cell appearance after scaling
         self.h_buff *= scale_factor

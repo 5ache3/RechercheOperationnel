@@ -198,8 +198,7 @@ class Simplex(Scene):
             self.play(FadeOut(equations))
             t1.to_corner(DL)
             self.play(t1.create())
-            self.embed()
-            self.play(FadeOut(t0))
+            self.play(FadeOut(VGroup(t0,piv_c,piv_r)))
 
 
 
