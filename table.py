@@ -464,12 +464,17 @@ class Table(VGroup):
     def create_row(self,
         row : int = 0,
         lag_ratio: float = 1,
+        exclude : int | None = None,
         element_animation: Callable[[VMobject | VGroup], Animation] = Create,
         **kwargs,
         ):
         animations: Sequence[Animation] = []
         rows = self.get_rows()
         if rows:
+            if exclude == None:
+                elements=rows[row]
+            else:
+                elements=rows[row][:exclude]+ rows[row][exclude+1:] if exclude+1 < len(rows[row]) else []
             animations.append(element_animation(rows[row], **kwargs))
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
@@ -478,13 +483,19 @@ class Table(VGroup):
     def create_column(self,
         col : int = 0,
         lag_ratio: float = 1,
+        exclude : int | None = None,
         element_animation: Callable[[VMobject | VGroup], Animation] = Create,
         **kwargs,
         ):
         animations: Sequence[Animation] = []
         columns = self.get_columns()
         if columns:
-            animations.append(element_animation(columns[col], **kwargs))
+            if exclude == None:
+                elements=columns[col]
+            else:
+                elements=columns[col][:exclude]+ columns[col][exclude+1:] if exclude+1 < len(columns[col]) else []
+
+            animations.append(element_animation(elements, **kwargs))
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
     
