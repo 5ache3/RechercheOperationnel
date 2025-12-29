@@ -20,6 +20,11 @@ from manimlib.animation.composition import AnimationGroup
 # --- ManimGL Aliases for ManimCE compatibility ---
 Create = ShowCreation 
 
+from fractions import Fraction
+def process_fraction(fraction:Fraction):
+    if fraction.denominator==1:
+        return fraction.numerator
+    return fr"\frac{{{fraction.numerator}}}{{{fraction.denominator}}}"
 # --- ManimGL Color Utility ---
 def _to_color(color_spec: Any) -> Color:
     """Converts a color specification to a ManimGL Color object."""
@@ -43,7 +48,6 @@ def BackgroundRectangle_Wrapper(cell_polygon: Polygon, color: Any, opacity: floa
     
     return cell_polygon
 # ----------------------------------------------------------------------
-
 
 class Table(VGroup):
     # List of all custom arguments that should NOT be passed to the parent Mobject constructor

@@ -2,7 +2,9 @@ from manimlib import *
 from fractions import Fraction
 import os,sys
 sys.path.append(os.curdir)
-from table import Table
+from table import Table,process_fraction
+
+
 
 class SimplexSolver:
 
@@ -147,20 +149,71 @@ class Simplex(Scene):
         p=SimplexSolver(programme)
 
         tables=p.tables
-        table=tables[1]['table']
-        main_t=[t[1:] for t in table[1:]]
-        # t0=Table(
-        #     table=main_t,
-        #     col_labels=[Tex(t) for t in table[0][1:]],
-        #     row_labels=[Tex(t[0]) for t in table[1:]]
-        #     )
-        t0=Table(table).scale(.5)
-        
+        self.tables=tables
 
-        c=t0.get_cell_b((2,3))
-        c2=t0.get_cell_b((2,5))
-        rec=SurroundingRectangle(VGroup(c,c2),buff=0,fill_color=RED,fill_opacity=.4,stroke_width=0)
-        self.play(t0.create_lables())
-        self.play(ShowCreation(rec))
+        table=tables[1]['table']
+        
+        t0=Table(tables[0]['table']).scale(.5)
+        t1=Table(tables[1]['table']).scale(.5)
+
+        def pass_table(self,t0:Table,t1:Table,ind):
+            p=self.tables[ind]['piv']
+
+            def finding_piv(self,table:Table,ind):
+                num_table=self.tables[ind]['table']
+                piv=self.tables[ind]['piv']
+                equations=VGroup()
+                for i in range(1,len(table.get_rows())-1):
+                    n=num_table[i][-1]
+                    d=num_table[i][piv[0]]
+                    eq=Tex(fr"\frac{{{process_fraction(n)}}}{{{process_fraction(d)}}}= {round(n/d,2) if d else ''}").scale(.75)
+                    equations.add(eq)
+                equations.arrange(DOWN).to_corner(UR)
+                for i in range(len(equations)):
+                    self.add(equations[i])
+                    self.wait()
+                rect=SurroundingRectangle(equations[piv[0]-1])
+                self.play(ShowCreation(rect))
+                return VGroup(equations,rect)
+            
+            self.play(t0.animate.to_corner(UL))
+            self.wait()
+            piv_c=SurroundingRectangle(
+                VGroup(
+                    t0.get_cell_b((0,p[0])),
+                    t0.get_cell_b((len(t0.get_rows())-1,p[0]))
+                ),
+                buff=0
+            )
+            piv_r=SurroundingRectangle(
+                VGroup(
+                    t0.get_cell_b((p[0],0)),
+                    t0.get_cell_b((p[0],len(t0.get_columns())-1))
+                ),
+                buff=0
+            )
+            self.play(ShowCreation(piv_c))
+            equations=finding_piv(self,t0,ind)
+            self.play(ShowCreation(piv_r))
+            self.play(FadeOut(equations))
+            t1.to_corner(DL)
+            self.play(t1.create())
+            self.embed()
+            self.play(FadeOut(t0))
+
+
+
+        
+        for i in range(len(tables)-1):
+            if i > 0:
+                t0=t1
+            else:
+                t0=Table(tables[i]['table']).scale(.5)
+            t1=Table(tables[i+1]['table']).scale(.5)
+            
+            pass_table(self,t0,t1,i)
+
+
+        
 
 
