@@ -137,90 +137,127 @@ class SimplexSolver:
 
 class Simplex(Scene):
 
-    def pass_table(self,t0:Table,t1:Table,ind):
+    def pass_table(self,t0:Table,t1:Table,ind) -> Table:
             
-            def finding_piv(self,table:Table,ind):
-                num_table=self.tables[ind]['table']
-                piv=self.tables[ind]['piv']
-                equations=VGroup()
-                for i in range(1,table.num_rows-1):
-                    n=num_table[i][-1]
-                    d=num_table[i][piv[0]]
-                    eq=Tex(fr"\frac{{{process_fraction(n)}}}{{{process_fraction(d)}}}= {round(n/d,2) if d else ''}").scale(.75)
-                    equations.add(eq)
-                equations.arrange(DOWN).to_corner(UR)
-                for i in range(len(equations)):
-                    self.add(equations[i])
-                    self.wait()
-                rect=SurroundingRectangle(equations[piv[0]-1])
-                self.play(ShowCreation(rect))
-                return VGroup(equations,rect)
-            
-
+        def finding_piv(self,table:Table,ind):
+            num_table=self.tables[ind]['table']
             piv=self.tables[ind]['piv']
-            self.play(t0.animate.to_corner(UL))
-            t1.to_corner(DL)
+            equations=VGroup()
+            for i in range(1,table.num_rows-1):
+                n=num_table[i][-1]
+                d=num_table[i][piv[0]]
+                eq=Tex(fr"\frac{{{process_fraction(n)}}}{{{process_fraction(d)}}}= {round(n/d,2) if d else ''}").scale(.75)
+                equations.add(eq)
+            equations.arrange(DOWN).to_corner(UR)
+            for i in range(len(equations)):
+                self.add(equations[i])
+                self.wait()
+            rect=SurroundingRectangle(equations[piv[0]-1])
+            self.play(ShowCreation(rect))
+            return VGroup(equations,rect)
+        
+
+        piv=self.tables[ind]['piv']
+        self.play(t0.animate.to_corner(UL))
+        t1.to_corner(DL)
+        self.wait()
+        piv_c=SurroundingRectangle(
+            VGroup(
+                t0.get_cell_b((0,piv[0])),
+                t0.get_cell_b((t0.num_rows-1,piv[0]))
+            ),
+            buff=0
+        )
+        piv_r=SurroundingRectangle(
+            VGroup(
+                t0.get_cell_b((piv[0],0)),
+                t0.get_cell_b((piv[0],t0.num_cols-1))
+            ),
+            buff=0
+        )
+        
+        # highlight pivot column
+        self.play(ShowCreation(piv_c))
+        # finding the pivot row
+        equations=finding_piv(self,t0,ind)
+        self.play(ShowCreation(piv_r))
+        self.play(FadeOut(equations))
+
+
+        self.play(t1.create_lines(),t1.create_row(0))
+
+        self.play(t1.create_cell(piv))
+        self.play(t1.create_cell((piv[0],0)))
+        self.play(t1.create_column(exclude=piv[0]))
+
+        # pivot column 1 if pivot, 0 if otherwise
+        for i in range(1,t1.num_rows):
+            if i == piv[0]:
+                continue
+            self.play(t1.create_cell((i,piv[1])))
+
+        # pivot row 
+        t0.add_highlighted_cell(piv,color=GREEN)
+        for i in range(1,t1.num_cols):
+
+            if i == piv[1]:
+                # new pivot always = 1
+                continue
+            t0.add_highlighted_cell((piv[0],i),color=RED)
+            pr=process_fraction(self.tables[ind]['table'][piv[0]][i]) # previous value for cell
+            pi=process_fraction(self.tables[ind]['table'][piv[0]][piv[1]])  # pivot value
+            nx=process_fraction(self.tables[ind+1]['table'][piv[0]][i]) # new value for cell
+
+            equation=VGroup(
+                VGroup(Tex(str(pr),fill_color=RED),Line(start=LEFT*.5,end=RIGHT*.5),Tex(str(pi),fill_color=GREEN)).arrange(DOWN),Tex("="),Tex(str(nx),fill_color=BLUE)
+            ).arrange(RIGHT).to_edge(RIGHT)
+            self.play(t1.create_cell((piv[0],i)),FadeIn(equation))
             self.wait()
-            piv_c=SurroundingRectangle(
-                VGroup(
-                    t0.get_cell_b((0,piv[0])),
-                    t0.get_cell_b((t0.num_rows-1,piv[0]))
-                ),
-                buff=0
-            )
-            piv_r=SurroundingRectangle(
-                VGroup(
-                    t0.get_cell_b((piv[0],0)),
-                    t0.get_cell_b((piv[0],t0.num_cols-1))
-                ),
-                buff=0
-            )
-            
-            # highlight pivot column
-            self.play(ShowCreation(piv_c))
-            # finding the pivot row
-            equations=finding_piv(self,t0,ind)
-            self.play(ShowCreation(piv_r))
-            self.play(FadeOut(equations))
-
-
-            self.play(t1.create_lines(),t1.create_row(0))
-
-            self.play(t1.create_cell(piv))
-            self.play(t1.create_cell((piv[0],0)))
-            self.play(t1.create_column(exclude=piv[0]))
-
-            # pivot column 1 if pivot, 0 if otherwise
-            for i in range(1,t1.num_rows):
-                if i == piv[0]:
+            self.play(FadeOut(equation))
+            t0.remove_highlighted_cell((piv[0],i))
+        
+        # animate the rest of the table
+        for i in range(1,t1.num_rows):
+            if i == piv[0]:
+                continue
+            for j in range(1,t1.num_cols):
+                if j == piv[1]:
                     continue
-                self.play(t1.create_cell((i,piv[1])))
-
-            # pivot row 
-            t0.add_highlighted_cell(piv,color=GREEN)
-            for i in range(1,t1.num_cols):
-
-                if i == piv[1]:
-                    # new pivot always = 1
-                    continue
-                t0.add_highlighted_cell((piv[0],i),color=RED)
-                pr=process_fraction(self.tables[ind]['table'][piv[0]][i]) # previous value for cell
+                t0.add_highlighted_cell(piv,color=GREEN)
+                t0.add_highlighted_cell((i,j),color=RED)
+                t0.add_highlighted_cell((piv[0],j),color=PURPLE)
+                t0.add_highlighted_cell((i,piv[1]),color=PURPLE)
+                
                 pi=process_fraction(self.tables[ind]['table'][piv[0]][piv[1]])  # pivot value
-                nx=process_fraction(self.tables[ind+1]['table'][piv[0]][i]) # new value for cell
-
+                pr=process_fraction(self.tables[ind]['table'][i][j]) # previous value for cell
+                c=process_fraction(self.tables[ind]['table'][i][piv[1]])  # column projection
+                r=process_fraction(self.tables[ind]['table'][piv[0]][j])  # row projection
+                nx=process_fraction(self.tables[ind+1]['table'][i][j]) # new value for cell
+                
                 equation=VGroup(
-                    VGroup(Tex(str(pr),fill_color=RED),Line(start=LEFT*.5,end=RIGHT*.5),Tex(str(pi),fill_color=GREEN)).arrange(DOWN),Tex("="),Tex(str(nx),fill_color=BLUE)
+                    Tex(f"{pr}",t2c={f"{pr}":RED}),Tex("-"),
+                    VGroup(
+                        Tex(fr"{c} \cdot {r}",t2c={f"{c}":PURPLE,f"{r}":PURPLE}),
+                        Line(start=LEFT*.5,end=RIGHT*.5),
+                        Tex(f"{pi}",fill_color=GREEN)
+                    ).arrange(DOWN),
+                    Tex("="),
+                    Tex(f"{nx}",fill_color=BLUE)
                 ).arrange(RIGHT).to_edge(RIGHT)
-                self.play(t1.create_cell((piv[0],i)),FadeIn(equation))
+
+                self.play(t1.create_cell((i,j)),FadeIn(equation))
+                self.wait(2)
                 self.play(FadeOut(equation))
-                t0.remove_highlighted_cell((piv[0],i))
-            
-            
+
+                t0.remove_highlighted_cell(piv)
+                t0.remove_highlighted_cell((i,j))
+                t0.remove_highlighted_cell((piv[0],j))
+                t0.remove_highlighted_cell((i,piv[1]))
 
 
-
-            self.embed()
-            self.play(FadeOut(VGroup(t0,piv_c,piv_r)))
+        # self.embed()
+        self.play(FadeOut(VGroup(t0,piv_c,piv_r)))
+        return t1
 
 
     def construct(self):
@@ -244,7 +281,9 @@ class Simplex(Scene):
                 t0=Table(tables[i]['table']).scale(.5)
             t1=Table(tables[i+1]['table']).scale(.5)
             
-            self.pass_table(t0,t1,i)
+            final=self.pass_table(t0,t1,i)
+        self.play(final.animate.move_to(ORIGIN))
+        self.wait(3)
 
         
 
