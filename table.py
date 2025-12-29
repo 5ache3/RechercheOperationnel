@@ -25,7 +25,7 @@ def process_fraction(fraction:Fraction):
     try:
         if fraction.denominator==1:
             return fraction.numerator
-        return fr"\frac{{{fraction.numerator}}}{{{fraction.denominator}}}"
+        return fr"{'-' if fraction.numerator < 0 else ''}\frac{{{abs(fraction.numerator)}}}{{{fraction.denominator}}}"
     except:
         return fraction
 # --- ManimGL Color Utility ---
@@ -103,7 +103,7 @@ class Table(VGroup):
         self.element_to_mobject_config = element_to_mobject_config
         self.arrange_in_grid_config = arrange_in_grid_config
         self.line_config = line_config
-
+        self.highlights={}
         if not table:
              raise ValueError("Table cannot be empty.")
         self.row_dim = len(table)
@@ -396,11 +396,11 @@ class Table(VGroup):
         return rec
 
     def get_highlighted_cell(
-        self, pos: Sequence[int] = (1, 1), color: Any = YELLOW, **kwargs
+        self, pos: Sequence[int] = (1, 1), color: Any = YELLOW, opacity:float=0.8, **kwargs
     ) -> Polygon:
         # Returns a filled Polygon (cell) which acts as the highlight
         cell = self.get_cell_b(pos)
-        cell.set_fill(color=_to_color(color), opacity=0.8)
+        cell.set_fill(color=_to_color(color), opacity=opacity)
         cell.set_stroke(width=0)
         return cell 
 
@@ -408,12 +408,23 @@ class Table(VGroup):
         self, pos: Sequence[int] = (1, 1), color: Any = YELLOW, **kwargs
     ) -> 'Table':
         bg_cell = self.get_highlighted_cell(pos, color=_to_color(color), **kwargs)
+        self.highlights[f'{pos}']=bg_cell
         self.add_to_back(bg_cell)
         
         entry = self.get_entries(pos)
         entry.background_rectangle = bg_cell # Attach for animation reference
         return self
+    
+    def remove_highlighted_cell(self, pos: Sequence[int] = (1, 1),) -> None:
+        if f'{pos}' in self.highlights:
+            self.remove(self.highlights[f'{pos}'])
+    
+    def remove_highlighted_cells(self) -> None:
+        self.remove(self.highlights)
+    
 
+    
+    
     def create_lines(
         self,
         lag_ratio: float = 1,
@@ -465,7 +476,7 @@ class Table(VGroup):
         row : int = 0,
         lag_ratio: float = 1,
         exclude : int | None = None,
-        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Write,
         **kwargs,
         ):
         animations: Sequence[Animation] = []
@@ -484,7 +495,7 @@ class Table(VGroup):
         col : int = 0,
         lag_ratio: float = 1,
         exclude : int | None = None,
-        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Write,
         **kwargs,
         ):
         animations: Sequence[Animation] = []
@@ -502,7 +513,7 @@ class Table(VGroup):
     def create_cell(self,
         pos: Sequence[int] = (1, 1),
         lag_ratio: float = 1,
-        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Write,
         **kwargs,
         ):
         animations: Sequence[Animation] = []
