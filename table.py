@@ -488,6 +488,19 @@ class Table(VGroup):
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
     
+    def create_cell(self,
+        pos: Sequence[int] = (1, 1),
+        lag_ratio: float = 1,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        **kwargs,
+        ):
+        animations: Sequence[Animation] = []
+        cell = self.get_cell(pos)
+        if cell:
+            return element_animation(cell, **kwargs)
+    
+        return AnimationGroup(*animations, lag_ratio=lag_ratio)
+    
 
     def create(
         self,
