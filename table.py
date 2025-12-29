@@ -474,6 +474,21 @@ class Table(VGroup):
         
         return AnimationGroup(*animations, lag_ratio=lag_ratio)
     
+    
+    def create_column(self,
+        col : int = 0,
+        lag_ratio: float = 1,
+        element_animation: Callable[[VMobject | VGroup], Animation] = Create,
+        **kwargs,
+        ):
+        animations: Sequence[Animation] = []
+        columns = self.get_columns()
+        if columns:
+            animations.append(element_animation(columns[col], **kwargs))
+        
+        return AnimationGroup(*animations, lag_ratio=lag_ratio)
+    
+
     def create(
         self,
         lag_ratio: float = 1,
