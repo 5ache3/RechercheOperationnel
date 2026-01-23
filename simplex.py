@@ -208,8 +208,12 @@ class Simplex(Scene):
             pi=process_fraction(self.tables[ind]['table'][piv[0]][piv[1]])  # pivot value
             nx=process_fraction(self.tables[ind+1]['table'][piv[0]][i]) # new value for cell
 
+            num=Tex(str(pr),fill_color=RED)
+            den=Tex(str(pi),fill_color=GREEN)
             equation=VGroup(
-                VGroup(Tex(str(pr),fill_color=RED),Line(start=LEFT*.5,end=RIGHT*.5),Tex(str(pi),fill_color=GREEN)).arrange(DOWN),Tex("="),Tex(str(nx),fill_color=BLUE)
+                VGroup(num,
+                Line(start=num.get_left()+LEFT*.1,end=num.get_right()+RIGHT*.1),
+                den).arrange(DOWN),Tex("="),Tex(str(nx),fill_color=BLUE)
             ).arrange(RIGHT).to_edge(RIGHT)
             self.play(t1.create_cell((piv[0],i)),FadeIn(equation))
             self.wait()
@@ -234,12 +238,14 @@ class Simplex(Scene):
                 r=process_fraction(self.tables[ind]['table'][piv[0]][j])  # row projection
                 nx=process_fraction(self.tables[ind+1]['table'][i][j]) # new value for cell
                 
+                num=Tex(fr"{c} \cdot {r}",t2c={f"{c}":PURPLE,f"{r}":PURPLE})
+                den=Tex(f"{pi}",fill_color=GREEN)
                 equation=VGroup(
                     Tex(f"{pr}",t2c={f"{pr}":RED}),Tex("-"),
                     VGroup(
-                        Tex(fr"{c} \cdot {r}",t2c={f"{c}":PURPLE,f"{r}":PURPLE}),
-                        Line(start=LEFT*.5,end=RIGHT*.5),
-                        Tex(f"{pi}",fill_color=GREEN)
+                        num,
+                        Line(start=num.get_left(),end=num.get_right()),
+                        den.b
                     ).arrange(DOWN),
                     Tex("="),
                     Tex(f"{nx}",fill_color=BLUE)

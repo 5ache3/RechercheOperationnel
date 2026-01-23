@@ -222,24 +222,31 @@ def find_lines_by_intersection(lines,p):
             lis.append(line)
     return lis
 
-def calculate_range(lines,C,first=True):
-    if first:
-        l=[]
-        for i in lines:
-            if i[1]==0:
-                l.append(i[0]*C)
-            else:
-                l.append(i[0]*C/i[1])
+def calculate_ranges(lines,func):
+    
+    l1=[]
+    X,Y=func
+    for line in lines:
+        if line[1]==0:
+            l1.append(0)
+        elif line[0]==0:
+            l1.append(X*2)
+        else:
+            l1.append(line[0]*Y/line[1])
             
-    else:
-        l=[]
-        for i in lines:
-            if i[0]==0:
-                l.append(i[1]*C)
-            else:
-                l.append(i[1]*C/i[0])
-    l.sort()
-    return l
+    
+    l2=[]
+    for line in lines:
+        if line[1]==0:
+            l2.append(Y*2)
+        elif line[0]==0:
+            l2.append(0)
+        else:
+            l2.append(line[1]*X/line[0])
+        
+    l1.sort()
+    l2.sort()
+    return [l1,l2]
 
 def same_point(p1,p2):
     return p1[0]==p2[0] & p1[1]==p2[1]
@@ -354,8 +361,8 @@ class PL(Scene):
         except:
             self.concerned_lines=c_lines
 
-        start_1,end_1=calculate_range(self.concerned_lines,func[1],True)
-        start_2,end_2=calculate_range(self.concerned_lines,func[0],False)
+        [start_1,end_1],[start_2,end_2]=calculate_ranges(self.concerned_lines,func)
+        
 
         # TODO : animate the process of finding the ranges of optimality
 
@@ -458,7 +465,7 @@ class PL(Scene):
         super().on_key_press(symbol,modifiers)
         
     def construct(self):
-        func=[300,1000]
+        func=[1200,500]
         lines=[
             [10,5,200],
             [2,3,60],
